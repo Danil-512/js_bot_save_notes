@@ -1,6 +1,8 @@
 node_modules
 package-lock.json
+package.json
 README.md
 README.txt
 Функ*
 js_tg_bot_token.txt
+.git

@@ -6,6 +6,5 @@ WORKDIR /app
 RUN npm init -y
 RUN npm i grammy
 RUN npm i dotenv
-RUN npm i nodemon
 COPY . .
-CMD ["npm", "start"]
+CMD ["node", "index.js"]

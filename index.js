@@ -49,12 +49,18 @@ bot.api.setMyCommands([
         command: 'start', 
         description: 'Запуск бота',
     },
-    /*
     {
-        command: 'hello', 
-        description: 'Приветствие',
+        command: 'currencies', 
+        description: 'Вывод списка валют',
     },
-    */
+    {
+        command: 'currencies_save', 
+        description: 'Сохранение списка валют на сервере',
+    },
+    {
+        command: 'download_html', 
+        description: 'Сохранить html страницу сайта банка на сервер',
+    },
     /* Команды через кэмел или снейк кейс, не работают в меню
     {
         command: 'hello_Friend', 
@@ -72,6 +78,115 @@ bot.api.setMyCommands([
 bot.command('start', async (ctx) => {
     await ctx.reply('Рад приветствовать! Это бот для сохранения закладок. Пиши сюда текстовые сообщения или файлы, я сохраню их на компьютере.\nОграничение по длине текстового сообщения - 500 символов\nОграничение по размеру файла - 20мб')
 });
+
+
+
+//----------------------------------------------------------------------------------------------------------------------------------------//
+// Работа с валютами
+const url = "https://www.banki.ru/products/currency/cb/";
+// axios для работы с запросами
+const axios = require('axios');
+// Сам парсер
+const cheerio = require('cheerio');
+// Переменная для хранения html файла
+html_file = null; 
+// Получение файла html
+async function getHtml(url) {
+    fetch(url)
+    .then(response => response.text())
+    .then(html => html_file = html);
+}
+// Функция для сохранения Html Страницы на сервере
+async function downloadHtml() {
+    console.log('Запуск функции для скачивания файла');
+    var now = new Date();
+    const day = now.getDate();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+    const hour = now.getHours();
+    const minut = now.getMinutes();
+    const second = now.getSeconds();
+    //
+    // Путь для сохранения скачиваемого файла
+    const local_file_path = `./save_html/${day}_${month}_${year}__${second}:${minut}:${hour}.html`
+    //
+    const response = await axios.get(url);
+
+    fileSys.writeFileSync(local_file_path, response.data);
+    console.log(`HTML сохранен в ${local_file_path}`);
+}
+// Функция для извлечения данных о валютах из HTML
+function extractCurrencies(html) {
+    console.log("%cЗапуск функции извлечения курсов валют", "color: green");
+    const $ = cheerio.load(html);
+    const currencies = [];
+
+    const dolar = $('html body div.Layoutstyled__StyledRoot-sc-u5jf65-0.jTVCda div.Layoutstyled__StyledContent-sc-u5jf65-1.gmqNuN div.LayoutWrapper__sc-k10h92-0.lfqBOi div div div.GridRow__sc-1e0lykf-0.idhGrO div.GridCol__sc-n5ivvz-0.jnxKZK div div:nth-child(2) div div:nth-child(1) section div div div:nth-child(2) div div.Text__sc-vycpdy-0.gJTmbP').text().trim().replace('₽', '');
+    const evro = $('html body div.Layoutstyled__StyledRoot-sc-u5jf65-0.jTVCda div.Layoutstyled__StyledContent-sc-u5jf65-1.gmqNuN div.LayoutWrapper__sc-k10h92-0.lfqBOi div div div.GridRow__sc-1e0lykf-0.idhGrO div.GridCol__sc-n5ivvz-0.jnxKZK div div:nth-child(2) div div:nth-child(2) section div div div:nth-child(2) div div.Text__sc-vycpdy-0.gJTmbP').text().trim().replace('₽', '');
+    const real = $('html body div.Layoutstyled__StyledRoot-sc-u5jf65-0.jTVCda div.Layoutstyled__StyledContent-sc-u5jf65-1.gmqNuN div.LayoutWrapper__sc-k10h92-0.lfqBOi div div div.GridRow__sc-1e0lykf-0.idhGrO div.GridCol__sc-n5ivvz-0.jnxKZK div div:nth-child(2) div div:nth-child(3) section div div div:nth-child(2) div div.Text__sc-vycpdy-0.gJTmbP').text().trim().replace('₽', '');
+    const zlotu = $('html body div.Layoutstyled__StyledRoot-sc-u5jf65-0.jTVCda div.Layoutstyled__StyledContent-sc-u5jf65-1.gmqNuN div.LayoutWrapper__sc-k10h92-0.lfqBOi div div div.GridRow__sc-1e0lykf-0.idhGrO div.GridCol__sc-n5ivvz-0.jnxKZK div div:nth-child(2) div div:nth-child(4) section div div div:nth-child(2) div div.Text__sc-vycpdy-0.gJTmbP').text().trim().replace('₽', '');
+    const grivna = $('html body div.Layoutstyled__StyledRoot-sc-u5jf65-0.jTVCda div.Layoutstyled__StyledContent-sc-u5jf65-1.gmqNuN div.LayoutWrapper__sc-k10h92-0.lfqBOi div div div.GridRow__sc-1e0lykf-0.idhGrO div.GridCol__sc-n5ivvz-0.jnxKZK div div:nth-child(2) div div:nth-child(5) section div div div:nth-child(2) div div.Text__sc-vycpdy-0.gJTmbP').text().trim().replace('₽', '');
+    const lary = $('html body div.Layoutstyled__StyledRoot-sc-u5jf65-0.jTVCda div.Layoutstyled__StyledContent-sc-u5jf65-1.gmqNuN div.LayoutWrapper__sc-k10h92-0.lfqBOi div div div.GridRow__sc-1e0lykf-0.idhGrO div.GridCol__sc-n5ivvz-0.jnxKZK div div:nth-child(2) div div:nth-child(6) section div div div:nth-child(2) div div.Text__sc-vycpdy-0.gJTmbP').text().trim().replace('₽', '');
+
+    console.log('Курсы валют:');
+    console.log('USD:', dolar);
+    console.log('EUR:', evro);
+    console.log('BRL:', real);
+    console.log('PLN:', zlotu);
+    console.log('UAH:', grivna);
+    console.log('GEL:', lary);
+
+    currencies.push(['USD', dolar]);
+    currencies.push(['EUR', evro]);
+    currencies.push(['BRL', real]);
+    currencies.push(['PLN', zlotu]);
+    currencies.push(['UAH', grivna]);
+    currencies.push(['GEL', lary]);
+
+    return currencies;
+}
+
+
+bot.command('download_html', async (ctx) => {
+    downloadHtml();
+    await ctx.reply('Html страница сайта банка с акутальным курсом сохранена на сервере')
+});
+
+bot.command('currencies', async (ctx) => {
+    getHtml(url);
+    currencies = extractCurrencies(html_file)
+    output_string = ''
+    for (const el of currencies) {
+        output_string = output_string + '\n' + el[0] + ' ' + el[1]
+    }
+    await ctx.reply(`Вывод списка валют: \n${output_string}`)
+});
+
+bot.command('currencies_save', async (ctx) => {
+    getHtml(url);
+    currencies = extractCurrencies(html_file)
+    output_string = ''
+    for (const el of currencies) {
+        output_string = output_string + '\n' + el[0] + ' ' + el[1]
+    }
+    //
+    var now = new Date();
+    const day = now.getDate();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+    const hour = now.getHours();
+    const minut = now.getMinutes();
+    const second = now.getSeconds();
+    //
+    // Путь для сохранения скачиваемого файла
+    const local_file_path = `./save_currencies/${day}_${month}_${year}__${second}_${minut}_${hour}.txt`
+    // Сохранение файла
+    fileSys.writeFileSync(local_file_path, output_string);
+
+    await ctx.reply('Список валют с акутальным курсом сохранен на сервере')
+});
+//----------------------------------------------------------------------------------------------------------------------------------------//
+
 
 /*
 // Также можно передать массив команд вместо одной.
